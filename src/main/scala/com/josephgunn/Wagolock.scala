@@ -22,7 +22,7 @@ case class Status( lock: Int)
 
 case class LockerStatus( open: Boolean)
 
-case class LockerStati(c: Array[Boolean])
+case class LockerStati(c: IndexedSeq[Boolean])
 
 
 object LockerServer {
@@ -32,9 +32,8 @@ object LockerServer {
 }
 
 class LockerServer(messageClient: ActorRef, count: Int, ipaddr: String, port: Int) extends Actor {
-implicit def BitVector2BoolList(b: BitVector): Array[Boolean] = {
-	val cl: Array[Byte] = b.getBytes
-	for ( c <- cl) yield ( c=='0')
+implicit def BitVector2BoolList(b: BitVector): IndexedSeq[Boolean] = {
+	b.toString().map { case '1' => true; case _ => false }
 } 
 	var lockerOpen = List[Boolean]()
 
