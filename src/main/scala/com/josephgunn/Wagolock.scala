@@ -80,7 +80,7 @@ class StatusClient() extends Actor {
 	lockerActor !Unlock(2)
 	def receive = {
 		case msg @ LockerStati(m) => {
-			m.zipWithIndex foreach { case (l, i) => println("locker $i is $l")}
+			m.zipWithIndex foreach { case (l, i) => println(s"locker $i is $l")}
 		} 
 		case msg @ _ => 
 			println("LockerServer unknown message " + msg)
