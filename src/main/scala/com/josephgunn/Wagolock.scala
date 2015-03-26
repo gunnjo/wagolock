@@ -11,13 +11,19 @@ import scala.concurrent.duration._
 import java.net._
 import java.io._
 
+import net.wimpi.modbus.net._
+import net.wimpi.modbus.msg._
+import net.wimpi.modbus.io._
+import net.wimpi.modbus.util.BitVector
+
 case class Unlock( lock: Int)
 
 case class Status( lock: Int)
 
 case class LockerStatus( open: Boolean)
 
-case class LockerStati(s: String)
+case class LockerStati(c: Array[Boolean])
+
 
 object LockerServer {
   	def props(transactor: ActorRef, count: Int, ipaddr: String, port: Int): Props = {
@@ -26,9 +32,10 @@ object LockerServer {
 }
 
 class LockerServer(messageClient: ActorRef, count: Int, ipaddr: String, port: Int) extends Actor {
-	import net.wimpi.modbus.net._
-	import net.wimpi.modbus.msg._
-	import net.wimpi.modbus.io._
+implicit def BitVector2BoolList(b: BitVector): Array[Boolean] = {
+	val cl: Array[Byte] = b.getBytes
+	for ( c <- cl) yield ( c=='0')
+} 
 	var lockerOpen = List[Boolean]()
 
 	import context.system
@@ -60,7 +67,7 @@ class LockerServer(messageClient: ActorRef, count: Int, ipaddr: String, port: In
 			trans.execute()
 			val res: ReadInputDiscretesResponse = trans.getResponse().asInstanceOf[ReadInputDiscretesResponse]
 			println("Digital Inputs Status=" + res.getDiscretes().toString())
-			messageClient ! LockerStati(res.getDiscretes().toString())
+			messageClient ! LockerStati(res.getDiscretes())
 		}
 		case msg @ _ => 
 			println("LockerServer unknown message " + msg)
@@ -72,6 +79,9 @@ class StatusClient() extends Actor {
  	val lockerActor = context.actorOf( LockerServer.props(self, 8, "192.168.34.123", 502), name = "locks")
 	lockerActor !Unlock(2)
 	def receive = {
+		case msg @ LockerStati(m) => {
+			m.zipWithIndex foreach { case (l, i) => println("locker $i is $l")}
+		} 
 		case msg @ _ => 
 			println("LockerServer unknown message " + msg)
 
