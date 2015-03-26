@@ -1,4 +1,4 @@
-package com.parcelist
+package com.josephgunn
 
 import akka.actor.{Actor, ActorRef}
 import akka.actor.ActorSystem
