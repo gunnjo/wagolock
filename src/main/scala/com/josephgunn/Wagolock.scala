@@ -58,10 +58,16 @@ implicit def BitVector2BoolList(b: BitVector): IndexedSeq[Boolean] = {
 	val trans: ModbusTCPTransaction = new ModbusTCPTransaction(con)
 	trans.setRequest(req)
 
+	val res: ReadInputDiscretesResponse = trans.getResponse().asInstanceOf[ReadInputDiscretesResponse]
+	lockerOpen = res.getDiscretes()			
 
 	def receive = {
 
 		case Unlock(locker) =>
+			lockerOpen(locker) match {
+				case false =>
+				case true =>
+			}
 		case Status(locker) =>
 			messageClient ! LockerStatus(lockerOpen(locker))
 		case "close" =>
