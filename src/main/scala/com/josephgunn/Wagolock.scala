@@ -105,18 +105,22 @@ class StatusClient() extends Actor {
 }
 object Wagolock extends App {
 
-import scala.Console._
+import scala.io._
 	val system = ActorSystem("Wago")
   val transactor = system.actorOf( Props(new StatusClient), name = "statusClient")
   var working = true
 
-  	while (working) {
-		scala.Console.in.read.toInt match {
-			case 'q' =>
-				working = false
+  try {
+  	while (true) {
+		scala.io.StdIn.readInt match {
 			case  i @ _ =>
 				transactor ! Unlock(i)
 		}
+
+	}
+	} catch {
+		     case e: Exception => 
+		     println(e)
 	}
 	transactor ! PoisonPill
 }
