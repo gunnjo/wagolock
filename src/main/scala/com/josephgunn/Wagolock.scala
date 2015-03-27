@@ -78,7 +78,8 @@ implicit def BitVector2BoolList(b: BitVector): IndexedSeq[Boolean] = {
 		case ReceiveTimeout => {
 			trans.execute()
 			val res: ReadInputDiscretesResponse = trans.getResponse().asInstanceOf[ReadInputDiscretesResponse]
-			messageClient ! LockerStati(res.getDiscretes())
+			lockerOpen = res.getDiscretes()
+			messageClient ! LockerStati(lockerOpen)
 		}
 		case msg @ _ => 
 			println("LockerServer unknown message " + msg)
