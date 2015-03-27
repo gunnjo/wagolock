@@ -34,10 +34,10 @@ object LockerServer {
 class LockerServer(messageClient: ActorRef, count: Int, ipaddr: String, port: Int) extends Actor {
 implicit def BitVector2Bool(b: BitVector, i: Integer): Boolean = {
 	val s = b.toString
-	s(i) match { case '1' => true; case _ => false }
+	s(i) match { case '0' => true; case _ => false }
 } 
 implicit def BitVector2BoolList(b: BitVector): IndexedSeq[Boolean] = {
-	b.toString().map { case '1' => true; case _ => false }
+	b.toString().map { case '0' => true; case _ => false }
 } 
 	var lockerOpen = new BitVector(count)
 
@@ -67,7 +67,7 @@ implicit def BitVector2BoolList(b: BitVector): IndexedSeq[Boolean] = {
 		case Unlock(locker) =>
 			lockerOpen(locker) match {
 				case false =>
-					println(s"locker $locker is Open")
+					println(s"locker $locker is Closed")
 				case true =>
 					println(s"locker $locker is Open")
 			}
