@@ -1,6 +1,6 @@
 package com.josephgunn
 
-import akka.actor.{Actor, ActorRef}
+import akka.actor.{Actor, ActorRef, PoisonPill}
 import akka.actor.ActorSystem
 import akka.actor.Props
 import akka.event.Logging
@@ -66,6 +66,7 @@ implicit def BitVector2BoolList(b: BitVector): IndexedSeq[Boolean] = {
 		case Unlock(locker) =>
 			lockerOpen(locker) match {
 				case false =>
+					
 				case true =>
 			}
 		case Status(locker) =>
@@ -81,25 +82,40 @@ implicit def BitVector2BoolList(b: BitVector): IndexedSeq[Boolean] = {
 			println("LockerServer unknown message " + msg)
 
 	}
+	override def postStop() = con.close()
+
 }
 
 class StatusClient() extends Actor {
  	val lockerActor = context.actorOf( LockerServer.props(self, 8, "192.168.34.123", 502), name = "locks")
 	lockerActor !Unlock(2)
 	def receive = {
-		case msg @ LockerStati(m) => {
+		case Unlock(b) => {
+			lockerActor ! Unlock(b)
+		} 
+		case LockerStati(m) => {
 			m.zipWithIndex foreach { case (l, i) => println(s"locker $i is $l")}
 		} 
 		case msg @ _ => 
 			println("LockerServer unknown message " + msg)
 
 	}
+	override def postStop() = lockerActor !PoisonPill
 }
 object Wagolock extends App {
+
+import scala.Console._
 	val system = ActorSystem("Wago")
   val transactor = system.actorOf( Props(new StatusClient), name = "statusClient")
+  var working = true
 
-
-	system.awaitTermination()
-
+  	while (working) {
+		scala.Console.in.read.toInt match {
+			case 'q' =>
+				working = false
+			case  i @ _ =>
+				transactor ! Unlock(i)
+		}
+	}
+	transactor ! PoisonPill
 }
