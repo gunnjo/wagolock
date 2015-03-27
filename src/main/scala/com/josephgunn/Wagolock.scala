@@ -43,7 +43,7 @@ implicit def BitVector2BoolList(b: BitVector): IndexedSeq[Boolean] = {
 
 	import context.system
 
-	context.setReceiveTimeout(15 seconds) 
+	self ! ReceiveTimeout
 	/* Variables for storing the parameters */
 	val addr:InetAddress = InetAddress.getByName(ipaddr)
 
@@ -77,6 +77,7 @@ implicit def BitVector2BoolList(b: BitVector): IndexedSeq[Boolean] = {
 				case true =>
 					println(s"locker $locker is Open")
 			}
+			context.setReceiveTimeout(1 second) 
 		case Status(locker) =>
 			messageClient ! LockerStatus(lockerOpen(locker))
 		case "close" =>
@@ -87,6 +88,7 @@ implicit def BitVector2BoolList(b: BitVector): IndexedSeq[Boolean] = {
 			val res: ReadInputDiscretesResponse = trans.getResponse().asInstanceOf[ReadInputDiscretesResponse]
 			lockerOpen = res.getDiscretes()
 			messageClient ! LockerStati(lockerOpen)
+			context.setReceiveTimeout(5 seconds) 
 		}
 		case msg @ _ => 
 			println("LockerServer unknown message " + msg)
