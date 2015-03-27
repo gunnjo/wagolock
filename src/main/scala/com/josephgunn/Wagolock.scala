@@ -67,8 +67,9 @@ implicit def BitVector2BoolList(b: BitVector): IndexedSeq[Boolean] = {
 		case Unlock(locker) =>
 			lockerOpen(locker) match {
 				case false =>
-					
+					println(s"locker $locker is Open")
 				case true =>
+					println(s"locker $locker is Open")
 			}
 		case Status(locker) =>
 			messageClient ! LockerStatus(lockerOpen(locker))
