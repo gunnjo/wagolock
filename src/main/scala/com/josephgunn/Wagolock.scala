@@ -47,16 +47,18 @@ implicit def BitVector2BoolList(b: BitVector): IndexedSeq[Boolean] = {
 	/* Variables for storing the parameters */
 	val addr:InetAddress = InetAddress.getByName(ipaddr)
 
-	val ref = 0
+	val readRef = 0
+	val writeRef = 0x200
 
 	val con:  TCPMasterConnection = new TCPMasterConnection(addr)
 	con.setPort(port)
 	con.connect()
 
-	val req: ReadInputDiscretesRequest = new ReadInputDiscretesRequest(ref, count)
+	val readReq: ReadInputDiscretesRequest = new ReadInputDiscretesRequest(readRef, count)
+	val writeReq: WriteMultipleCoilsRequest = new WriteMultipleCoilsRequest(writeRef, count)
 
 	val trans: ModbusTCPTransaction = new ModbusTCPTransaction(con)
-	trans.setRequest(req)
+	trans.setRequest(readReq)
 
 	trans.execute()
 	val res: ReadInputDiscretesResponse = trans.getResponse().asInstanceOf[ReadInputDiscretesResponse]
@@ -67,7 +69,11 @@ implicit def BitVector2BoolList(b: BitVector): IndexedSeq[Boolean] = {
 		case Unlock(locker) =>
 			lockerOpen(locker) match {
 				case false =>
-					println(s"locker $locker is Closed")
+					lockerOpen.setBit(locker, true)
+					writeReq.setCoils(lockerOpen)
+					trans.setRequest(writeReq)
+					trans.execute()
+					val res: WriteMultipleCoilsResponse = trans.getResponse().asInstanceOf[WriteMultipleCoilsResponse]
 				case true =>
 					println(s"locker $locker is Open")
 			}
@@ -76,6 +82,7 @@ implicit def BitVector2BoolList(b: BitVector): IndexedSeq[Boolean] = {
 		case "close" =>
 			con.close()
 		case ReceiveTimeout => {
+			trans.setRequest(readReq)
 			trans.execute()
 			val res: ReadInputDiscretesResponse = trans.getResponse().asInstanceOf[ReadInputDiscretesResponse]
 			lockerOpen = res.getDiscretes()
