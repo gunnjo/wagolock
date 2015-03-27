@@ -32,10 +32,14 @@ object LockerServer {
 }
 
 class LockerServer(messageClient: ActorRef, count: Int, ipaddr: String, port: Int) extends Actor {
+implicit def BitVector2Bool(b: BitVector, i: Integer): Boolean = {
+	val s = b.toString
+	s(i) match { case '1' => true; case _ => false }
+} 
 implicit def BitVector2BoolList(b: BitVector): IndexedSeq[Boolean] = {
 	b.toString().map { case '1' => true; case _ => false }
 } 
-	var lockerOpen = List[Boolean]()
+	var lockerOpen = new BitVector(count)
 
 	import context.system
 
@@ -65,7 +69,6 @@ implicit def BitVector2BoolList(b: BitVector): IndexedSeq[Boolean] = {
 		case ReceiveTimeout => {
 			trans.execute()
 			val res: ReadInputDiscretesResponse = trans.getResponse().asInstanceOf[ReadInputDiscretesResponse]
-			println("Digital Inputs Status=" + res.getDiscretes().toString())
 			messageClient ! LockerStati(res.getDiscretes())
 		}
 		case msg @ _ => 
