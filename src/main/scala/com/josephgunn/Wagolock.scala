@@ -134,4 +134,5 @@ import scala.io._
 		     println(e)
 	}
 	transactor ! PoisonPill
+	system.shutdown
 }
