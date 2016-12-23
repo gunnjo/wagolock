@@ -53,16 +53,20 @@ implicit def BitVector2BoolList(b: BitVector): IndexedSeq[Boolean] = {
 	val con:  TCPMasterConnection = new TCPMasterConnection(addr)
 	con.setPort(port)
 	con.connect()
+	System.setProperty("net.wimpi.modbus.debug","true")
 
 	val readReq: ReadInputDiscretesRequest = new ReadInputDiscretesRequest(readRef, count)
 	val writeReq: WriteMultipleCoilsRequest = new WriteMultipleCoilsRequest(writeRef, count)
 
+	readReq.setUnitID(1)
+	writeReq.setUnitID(1)
 	val trans: ModbusTCPTransaction = new ModbusTCPTransaction(con)
 	trans.setRequest(readReq)
 
 	trans.execute()
 	val res: ReadInputDiscretesResponse = trans.getResponse().asInstanceOf[ReadInputDiscretesResponse]
 	lockerOpen = res.getDiscretes()			
+
 
 	def receive = {
 
@@ -72,8 +76,18 @@ implicit def BitVector2BoolList(b: BitVector): IndexedSeq[Boolean] = {
 					lockerOpen.setBit(locker, true)
 					writeReq.setCoils(lockerOpen)
 					trans.setRequest(writeReq)
+					println(writeReq.getHexMessage())
 					trans.execute()
 					val res: WriteMultipleCoilsResponse = trans.getResponse().asInstanceOf[WriteMultipleCoilsResponse]
+					println(res.getHexMessage())
+					Thread.sleep(100)
+					val nc = lockerOpen
+					nc.setBit(locker, false)
+					writeReq.setCoils(nc)
+					println(writeReq.getHexMessage())
+					trans.execute()
+					val res2: WriteMultipleCoilsResponse = trans.getResponse().asInstanceOf[WriteMultipleCoilsResponse]
+					println(res2.getHexMessage())
 				case true =>
 					println(s"locker $locker is Open")
 			}
@@ -100,7 +114,6 @@ implicit def BitVector2BoolList(b: BitVector): IndexedSeq[Boolean] = {
 
 class StatusClient() extends Actor {
  	val lockerActor = context.actorOf( LockerServer.props(self, 8, "192.168.34.123", 502), name = "locks")
-	lockerActor !Unlock(2)
 	def receive = {
 		case Unlock(b) => {
 			lockerActor ! Unlock(b)
